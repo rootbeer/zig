@@ -582,8 +582,7 @@ test "readAllAlloc" {
 }
 
 test "Dir.statFile" {
-    // TODO: Re-enable once https://github.com/ziglang/zig/issues/17034 is solved
-    if (builtin.os.tag == .linux and builtin.link_libc and builtin.abi == .gnu) return error.SkipZigTest;
+    if (builtin.zig_backend == .stage2_x86_64) return error.SkipZigTest;
 
     try testWithAllSupportedPathTypes(struct {
         fn impl(ctx: *TestContext) !void {
