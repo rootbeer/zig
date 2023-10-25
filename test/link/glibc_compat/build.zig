@@ -17,4 +17,32 @@ pub fn build(b: *std.Build) void {
         _ = exe.getEmittedBin();
         test_step.dependOn(&exe.step);
     }
+
+    // Build & run against a sampling of supported glibc versions
+    for ([_][]const u8{
+        //"native-native-gnu.2.0",
+        //"native-native-gnu.2.1.1",
+        //"native-native-gnu.2.10", // pre-2.16 don't have getauxval(), which start.zig uses
+        "native-native-gnu.2.16",
+        "native-native-gnu.2.23",
+        "native-native-gnu.2.28",
+        "native-native-gnu.2.33",
+        "native-native-gnu.2.38",
+        "native-native-gnu",
+    }) |t| {
+        const exe = b.addExecutable(.{
+            .name = t,
+            .root_source_file = .{ .path = "glibc_runtime_check.zig" },
+            .target = std.zig.CrossTarget.parse(
+                .{ .arch_os_abi = t },
+            ) catch unreachable,
+        });
+        exe.linkLibC();
+
+        const run_cmd = b.addRunArtifact(exe);
+        run_cmd.expectExitCode(0);
+
+        test_step.dependOn(&run_cmd.step);
+    }
+
 }
