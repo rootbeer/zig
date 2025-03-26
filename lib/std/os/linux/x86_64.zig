@@ -156,7 +156,10 @@ pub fn restore_rt() callconv(.naked) noreturn {
 }
 
 pub const mode_t = usize;
-pub const time_t = isize;
+pub const time_t = switch (builtin.abi) {
+    .gnux32, .muslx32 => i64,
+    else => isize,
+};
 pub const nlink_t = usize;
 pub const blksize_t = isize;
 pub const blkcnt_t = isize;
