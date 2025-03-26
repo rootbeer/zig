@@ -1117,14 +1117,16 @@ pub fn updateTimes(
         const mtime_ft = windows.nanoSecondsToFileTime(mtime);
         return windows.SetFileTime(self.handle, null, &atime_ft, &mtime_ft);
     }
+    const sec_t = @FieldType(posix.timespec, "sec");
+    const nsec_t = @FieldType(posix.timespec, "nsec");
     const times = [2]posix.timespec{
         posix.timespec{
-            .sec = math.cast(isize, @divFloor(atime, std.time.ns_per_s)) orelse maxInt(isize),
-            .nsec = math.cast(isize, @mod(atime, std.time.ns_per_s)) orelse maxInt(isize),
+            .sec = math.cast(sec_t, @divFloor(atime, std.time.ns_per_s)) orelse maxInt(sec_t),
+            .nsec = math.cast(nsec_t, @mod(atime, std.time.ns_per_s)) orelse maxInt(nsec_t),
         },
         posix.timespec{
-            .sec = math.cast(isize, @divFloor(mtime, std.time.ns_per_s)) orelse maxInt(isize),
-            .nsec = math.cast(isize, @mod(mtime, std.time.ns_per_s)) orelse maxInt(isize),
+            .sec = math.cast(sec_t, @divFloor(mtime, std.time.ns_per_s)) orelse maxInt(sec_t),
+            .nsec = math.cast(nsec_t, @mod(mtime, std.time.ns_per_s)) orelse maxInt(nsec_t),
         },
     };
     try posix.futimens(self.handle, &times);
