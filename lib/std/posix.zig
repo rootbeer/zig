@@ -5622,9 +5622,12 @@ pub fn realpathW(pathname: []const u16, out_buffer: *[max_path_bytes]u8) RealPat
 
 /// Spurious wakeups are possible and no precision of timing is guaranteed.
 pub fn nanosleep(seconds: u64, nanoseconds: u64) void {
+    const sec_t = @FieldType(timespec, "sec");
+    const nsec_t = @FieldType(timespec, "nsec");
+
     var req = timespec{
-        .sec = cast(isize, seconds) orelse maxInt(isize),
-        .nsec = cast(isize, nanoseconds) orelse maxInt(isize),
+        .sec = cast(sec_t, seconds) orelse maxInt(sec_t),
+        .nsec = cast(nsec_t, nanoseconds) orelse maxInt(nsec_t),
     };
     var rem: timespec = undefined;
     while (true) {
