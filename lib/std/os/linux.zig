@@ -8167,16 +8167,16 @@ pub const POSIX_FADV = switch (native_arch) {
     },
 };
 
-/// The timespec struct used by the kernel.
+/// The timespec struct used by the kernel.  Always 64-bit.
 pub const kernel_timespec = extern struct {
     sec: i64,
     nsec: i64,
 };
 
-// https://github.com/ziglang/zig/issues/4726#issuecomment-2190337877
-pub const timespec = if (native_arch == .riscv32) kernel_timespec else extern struct {
-    sec: isize,
-    nsec: isize,
+/// The timespec used by the syscall ABI.  May be 32-bit for older ABIs.
+pub const timespec = extern struct {
+    sec: time_t,
+    nsec: time_t, // time_t isn't spec, but is sized right (esp for .riscv32 and {gnu,musl}x32)
 };
 
 pub const XDP = struct {
