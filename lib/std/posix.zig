@@ -5240,9 +5240,12 @@ pub const SeekError = error{
     AccessDenied,
 } || UnexpectedError;
 
+// Linux 32-bit syscall ABIs use the `llseek` syscall (not the `lseek` or `lseek64` variations)
+const has_linux_llseek = (native_os == .linux and !builtin.link_libc and @hasField(system.SYS, "llseek"));
+
 /// Repositions read/write file offset relative to the beginning.
 pub fn lseek_SET(fd: fd_t, offset: u64) SeekError!void {
-    if (native_os == .linux and !builtin.link_libc and @sizeOf(usize) == 4) {
+    if (has_linux_llseek) {
         var result: u64 = undefined;
         switch (errno(system.llseek(fd, offset, &result, SEEK.SET))) {
             .SUCCESS => return,
@@ -5285,7 +5288,7 @@ pub fn lseek_SET(fd: fd_t, offset: u64) SeekError!void {
 
 /// Repositions read/write file offset relative to the current offset.
 pub fn lseek_CUR(fd: fd_t, offset: i64) SeekError!void {
-    if (native_os == .linux and !builtin.link_libc and @sizeOf(usize) == 4) {
+    if (has_linux_llseek) {
         var result: u64 = undefined;
         switch (errno(system.llseek(fd, @bitCast(offset), &result, SEEK.CUR))) {
             .SUCCESS => return,
@@ -5327,7 +5330,7 @@ pub fn lseek_CUR(fd: fd_t, offset: i64) SeekError!void {
 
 /// Repositions read/write file offset relative to the end.
 pub fn lseek_END(fd: fd_t, offset: i64) SeekError!void {
-    if (native_os == .linux and !builtin.link_libc and @sizeOf(usize) == 4) {
+    if (has_linux_llseek) {
         var result: u64 = undefined;
         switch (errno(system.llseek(fd, @bitCast(offset), &result, SEEK.END))) {
             .SUCCESS => return,
@@ -5369,7 +5372,7 @@ pub fn lseek_END(fd: fd_t, offset: i64) SeekError!void {
 
 /// Returns the read/write file offset relative to the beginning.
 pub fn lseek_CUR_get(fd: fd_t) SeekError!u64 {
-    if (native_os == .linux and !builtin.link_libc and @sizeOf(usize) == 4) {
+    if (has_linux_llseek) {
         var result: u64 = undefined;
         switch (errno(system.llseek(fd, 0, &result, SEEK.CUR))) {
             .SUCCESS => return result,
