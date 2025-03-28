@@ -511,6 +511,8 @@ pub fn initStatic(phdrs: []elf.Phdr) void {
         const begin_addr = mmap_tls(area_desc.size + area_desc.alignment - 1);
         if (@call(.always_inline, linux.E.init, .{begin_addr}) != .SUCCESS) @trap();
 
+        // @truncate for x32 ABI which returns 32-bit (usize) address in 64-bit register
+        const begin_addr = @as(usize, @truncate(rc));
         const area_ptr: [*]align(page_size_min) u8 = @ptrFromInt(begin_addr);
 
         // Make sure the slice is correctly aligned.
@@ -523,7 +525,7 @@ pub fn initStatic(phdrs: []elf.Phdr) void {
     setThreadPointer(tp_value);
 }
 
-inline fn mmap_tls(length: usize) usize {
+inline fn mmap_tls(length: usize) linux.SyscallParam {
     const prot = posix.PROT.READ | posix.PROT.WRITE;
     const flags: linux.MAP = .{ .TYPE = .PRIVATE, .ANONYMOUS = true };
 
@@ -555,8 +557,8 @@ inline fn mmap_tls(length: usize) usize {
             0,
             length,
             prot,
-            @as(u32, @bitCast(flags)),
-            @as(usize, @bitCast(@as(isize, -1))),
+            linux.castParam(flags),
+            linux.castParam(-1),
             0,
         });
     }

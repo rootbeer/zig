@@ -21,26 +21,26 @@ const timespec = linux.timespec;
 // syscall parameters are still 64-bit.
 pub const SyscallParam = u64;
 
-pub fn syscall0(number: SYS) usize {
+pub fn syscall0(number: SYS) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
         : "rcx", "r11", "memory"
     );
 }
 
-pub fn syscall1(number: SYS, arg1: usize) usize {
+pub fn syscall1(number: SYS, arg1: SyscallParam) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
         : "rcx", "r11", "memory"
     );
 }
 
-pub fn syscall2(number: SYS, arg1: usize, arg2: usize) usize {
+pub fn syscall2(number: SYS, arg1: SyscallParam, arg2: SyscallParam) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
           [arg2] "{rsi}" (arg2),
@@ -48,9 +48,9 @@ pub fn syscall2(number: SYS, arg1: usize, arg2: usize) usize {
     );
 }
 
-pub fn syscall3(number: SYS, arg1: usize, arg2: usize, arg3: usize) usize {
+pub fn syscall3(number: SYS, arg1: SyscallParam, arg2: SyscallParam, arg3: SyscallParam) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
           [arg2] "{rsi}" (arg2),
@@ -59,9 +59,9 @@ pub fn syscall3(number: SYS, arg1: usize, arg2: usize, arg3: usize) usize {
     );
 }
 
-pub fn syscall4(number: SYS, arg1: usize, arg2: usize, arg3: usize, arg4: usize) usize {
+pub fn syscall4(number: SYS, arg1: SyscallParam, arg2: SyscallParam, arg3: SyscallParam, arg4: SyscallParam) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
           [arg2] "{rsi}" (arg2),
@@ -71,9 +71,9 @@ pub fn syscall4(number: SYS, arg1: usize, arg2: usize, arg3: usize, arg4: usize)
     );
 }
 
-pub fn syscall5(number: SYS, arg1: usize, arg2: usize, arg3: usize, arg4: usize, arg5: usize) usize {
+pub fn syscall5(number: SYS, arg1: SyscallParam, arg2: SyscallParam, arg3: SyscallParam, arg4: SyscallParam, arg5: SyscallParam) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
           [arg2] "{rsi}" (arg2),
@@ -86,15 +86,15 @@ pub fn syscall5(number: SYS, arg1: usize, arg2: usize, arg3: usize, arg4: usize,
 
 pub fn syscall6(
     number: SYS,
-    arg1: usize,
-    arg2: usize,
-    arg3: usize,
-    arg4: usize,
-    arg5: reg,
-    arg6: reg,
-) usize {
+    arg1: SyscallParam,
+    arg2: SyscallParam,
+    arg3: SyscallParam,
+    arg4: SyscallParam,
+    arg5: SyscallParam,
+    arg6: SyscallParam,
+) SyscallParam {
     return asm volatile ("syscall"
-        : [ret] "={rax}" (-> usize),
+        : [ret] "={rax}" (-> SyscallParam),
         : [number] "{rax}" (@intFromEnum(number)),
           [arg1] "{rdi}" (arg1),
           [arg2] "{rsi}" (arg2),
@@ -106,7 +106,7 @@ pub fn syscall6(
     );
 }
 
-pub fn clone() callconv(.naked) usize {
+pub fn clone() callconv(.naked) SyscallParam {
     asm volatile (
         \\      movl $56,%%eax // SYS_clone
         \\      movq %%rdi,%%r11
@@ -334,25 +334,25 @@ pub const fpstate = extern struct {
 };
 pub const fpregset_t = *fpstate;
 pub const sigcontext = extern struct {
-    r8: usize,
-    r9: usize,
-    r10: usize,
-    r11: usize,
-    r12: usize,
-    r13: usize,
-    r14: usize,
-    r15: usize,
+    r8: u64,
+    r9: u64,
+    r10: u64,
+    r11: u64,
+    r12: u64,
+    r13: u64,
+    r14: u64,
+    r15: u64,
 
-    rdi: usize,
-    rsi: usize,
-    rbp: usize,
-    rbx: usize,
-    rdx: usize,
-    rax: usize,
-    rcx: usize,
-    rsp: usize,
-    rip: usize,
-    eflags: usize,
+    rdi: u64,
+    rsi: u64,
+    rbp: u64,
+    rbx: u64,
+    rdx: u64,
+    rax: u64,
+    rcx: u64,
+    rsp: u64,
+    rip: u64,
+    eflags: u64,
 
     cs: u16,
     gs: u16,
@@ -365,13 +365,13 @@ pub const sigcontext = extern struct {
     cr2: u64,
 
     fpstate: *fpstate,
-    reserved1: [8]usize = undefined,
+    reserved1: [8]u64 = undefined,
 };
 
 pub const mcontext_t = extern struct {
     gregs: gregset_t,
     fpregs: fpregset_t,
-    reserved1: [8]usize = undefined,
+    reserved1: [8]u64 = undefined,
 };
 
 /// ucontext_t is part of the state pushed on the stack by the kernel for
@@ -392,10 +392,10 @@ pub const ucontext_t = extern struct {
 };
 
 fn gpRegisterOffset(comptime reg_index: comptime_int) usize {
-    return @offsetOf(ucontext_t, "mcontext") + @offsetOf(mcontext_t, "gregs") + @sizeOf(usize) * reg_index;
+    return @offsetOf(ucontext_t, "mcontext") + @offsetOf(mcontext_t, "gregs") + @sizeOf(greg_t) * reg_index;
 }
 
-fn getContextInternal() callconv(.naked) usize {
+fn getContextInternal() callconv(.naked) u64 {
     // TODO: Read GS/FS registers?
     asm volatile (
         \\ movq $0, %[flags_offset:c](%%rdi)
@@ -473,14 +473,14 @@ fn getContextInternal() callconv(.naked) usize {
     );
 }
 
-pub inline fn getcontext(context: *ucontext_t) usize {
+pub inline fn getcontext(context: *ucontext_t) u64 {
     // This method is used so that getContextInternal can control
     // its prologue in order to read RSP from a constant offset
     // An aligned stack is not needed for getContextInternal.
-    var clobber_rdi: usize = undefined;
+    var clobber_rdi: greg_t = undefined;
     return asm volatile (
         \\ callq %[getContextInternal:P]
-        : [_] "={rax}" (-> usize),
+        : [_] "={rax}" (-> u64),
           [_] "={rdi}" (clobber_rdi),
         : [_] "{rdi}" (context),
           [getContextInternal] "X" (&getContextInternal),

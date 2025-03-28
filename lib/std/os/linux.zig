@@ -1011,12 +1011,12 @@ pub fn mmap(address: ?[*]u8, length: usize, prot: usize, flags: MAP, fd: i32, of
     if (@hasField(SYS, "mmap2")) {
         return syscall6(
             .mmap2,
-            @intFromPtr(address),
+            castParam(address),
             length,
             prot,
-            @as(u32, @bitCast(flags)),
-            @bitCast(@as(isize, fd)),
-            @truncate(@as(u64, @bitCast(offset)) / std.heap.pageSize()),
+            castParam(flags),
+            castParam(fd),
+            castParam(offset / std.heap.pageSize()),
         );
     } else {
         // The s390x mmap() syscall existed before Linux supported syscalls with 5+ parameters, so
@@ -8238,9 +8238,9 @@ pub const kernel_timespec = extern struct {
 };
 
 /// The timespec used by the syscall ABI.  May be 32-bit for older ABIs.
-pub const timespec = extern struct {
+pub const timespec = if (native_arch == .riscv32) kernel_timespec else extern struct {
     sec: time_t,
-    nsec: time_t, // time_t isn't spec, but is sized right (esp for .riscv32 and {gnu,musl}x32)
+    nsec: time_t, // time_t isn't spec for nsec, but its sized right for our architectures
 };
 
 pub const XDP = struct {

@@ -1303,7 +1303,7 @@ pub fn get_probe(self: *IoUring) !linux.io_uring_probe {
     return probe;
 }
 
-fn handle_registration_result(res: usize) !void {
+fn handle_registration_result(res: linux.SyscallParam) !void {
     switch (linux.E.init(res)) {
         .SUCCESS => {},
         // One or more fds in the array are invalid, or the kernel does not support sparse sets:
