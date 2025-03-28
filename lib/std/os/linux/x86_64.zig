@@ -16,6 +16,11 @@ const sockaddr = linux.sockaddr;
 const socklen_t = linux.socklen_t;
 const timespec = linux.timespec;
 
+// Generally, on Linux syscall ABIs the "usize" matches the syscall
+// parameter width.  But on x32 flavor of x86_64 "usize" is 32-bit, but
+// syscall parameters are still 64-bit.
+pub const SyscallParam = u64;
+
 pub fn syscall0(number: SYS) usize {
     return asm volatile ("syscall"
         : [ret] "={rax}" (-> usize),
@@ -85,8 +90,8 @@ pub fn syscall6(
     arg2: usize,
     arg3: usize,
     arg4: usize,
-    arg5: usize,
-    arg6: usize,
+    arg5: reg,
+    arg6: reg,
 ) usize {
     return asm volatile ("syscall"
         : [ret] "={rax}" (-> usize),
