@@ -374,7 +374,7 @@ pub const Iterator = switch (native_os) {
                     }
                     if (rc == 0) return null;
                     self.index = 0;
-                    self.end_index = rc;
+                    self.end_index = @truncate(rc);
                 }
                 const linux_entry = @as(*align(1) linux.dirent64, @ptrCast(&self.buf[self.index]));
                 const next_index = self.index + linux_entry.reclen;
