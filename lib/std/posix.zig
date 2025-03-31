@@ -616,7 +616,7 @@ pub fn getrandom(buffer: []u8) GetRandomError!void {
                 break :res .{ @bitCast(rc), errno(rc) };
             } else res: {
                 const rc = linux.getrandom(buf.ptr, buf.len, 0);
-                break :res .{ rc, linux.E.init(rc) };
+                break :res .{ @truncate(rc), linux.E.init(rc) };
             };
 
             switch (err) {
@@ -3325,6 +3325,31 @@ pub fn readlinkW(file_path: []const u16, out_buffer: []u8) ReadLinkError![]u8 {
     return windows.ReadLink(fs.cwd().fd, file_path, out_buffer);
 }
 
+/// Convert a system.* call result into a `usize`.  On some platforms the
+/// raw result type is 32-bit, on others its 64-bit.  On some platforms the
+/// raw result is larger than the `usize`, and on some platforms its signed.
+fn systemResultUsize(rc: anytype) usize {
+    const inbits = @bitSizeOf(@TypeOf(rc));
+    const outbits = @bitSizeOf(usize);
+
+    const Unsigned = @Type(.{ .int = .{
+        .signedness = .unsigned,
+        .bits = inbits,
+    } });
+
+    if (outbits < inbits) {
+        return @truncate(@as(Unsigned, @bitCast(rc)));
+    }
+    return @intCast(@as(Unsigned, @bitCast(rc)));
+}
+
+test systemResultUsize {
+    _ = systemResultUsize(@as(u32, 0));
+    _ = systemResultUsize(@as(i32, 0));
+    _ = systemResultUsize(@as(u64, 0));
+    _ = systemResultUsize(@as(i64, 0));
+}
+
 /// Same as `readlink` except `file_path` is null-terminated.
 pub fn readlinkZ(file_path: [*:0]const u8, out_buffer: []u8) ReadLinkError![]u8 {
     if (native_os == .windows) {
@@ -3335,7 +3360,7 @@ pub fn readlinkZ(file_path: [*:0]const u8, out_buffer: []u8) ReadLinkError![]u8 
     }
     const rc = system.readlink(file_path, out_buffer.ptr, out_buffer.len);
     switch (errno(rc)) {
-        .SUCCESS => return out_buffer[0..@bitCast(rc)],
+        .SUCCESS => return out_buffer[0..systemResultUsize(rc)],
         .ACCES => return error.AccessDenied,
         .FAULT => unreachable,
         .INVAL => return error.NotLink,
@@ -3413,7 +3438,7 @@ pub fn readlinkatZ(dirfd: fd_t, file_path: [*:0]const u8, out_buffer: []u8) Read
     }
     const rc = system.readlinkat(dirfd, file_path, out_buffer.ptr, out_buffer.len);
     switch (errno(rc)) {
-        .SUCCESS => return out_buffer[0..@bitCast(rc)],
+        .SUCCESS => return out_buffer[0..systemResultUsize(rc)],
         .ACCES => return error.AccessDenied,
         .FAULT => unreachable,
         .INVAL => return error.NotLink,
@@ -4820,7 +4845,11 @@ pub fn mmap(
         break :blk @enumFromInt(system._errno().*);
     } else blk: {
         const err = errno(rc);
-        if (err == .SUCCESS) return @as([*]align(page_size_min) u8, @ptrFromInt(rc))[0..length];
+        if (err == .SUCCESS) {
+            const raw_addr = systemResultUsize(rc);
+            const ptr = @as([*]align(page_size_min) u8, @ptrFromInt(raw_addr));
+            return ptr[0..length];
+        }
         break :blk err;
     };
     switch (err) {
@@ -4877,7 +4906,11 @@ pub fn mremap(
         break :blk @enumFromInt(system._errno().*);
     } else blk: {
         const err = errno(rc);
-        if (err == .SUCCESS) return @as([*]align(page_size_min) u8, @ptrFromInt(rc))[0..new_len];
+        if (err == .SUCCESS) {
+            const raw_addr = systemResultUsize(rc);
+            const ptr = @as([*]align(page_size_min) u8, @ptrFromInt(raw_addr));
+            return ptr[0..new_len];
+        }
         break :blk err;
     };
     switch (err) {
