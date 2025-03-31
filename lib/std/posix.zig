@@ -250,9 +250,7 @@ pub fn errno(rc: anytype) E {
     if (use_libc) {
         return if (rc == -1) @enumFromInt(std.c._errno().*) else .SUCCESS;
     }
-    const signed: isize = @bitCast(rc);
-    const int = if (signed > -4096 and signed < 0) -signed else 0;
-    return @enumFromInt(int);
+    return E.init(rc);
 }
 
 /// Closes the file descriptor.
