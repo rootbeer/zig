@@ -4847,8 +4847,8 @@ pub fn mmap(
         const err = errno(rc);
         if (err == .SUCCESS) {
             const raw_addr = systemResultUsize(rc);
-            const ptr = @as([*]align(page_size_min) u8, @ptrFromInt(raw_addr));
-            return ptr[0..length];
+            const result_ptr = @as([*]align(page_size_min) u8, @ptrFromInt(raw_addr));
+            return result_ptr[0..length];
         }
         break :blk err;
     };
