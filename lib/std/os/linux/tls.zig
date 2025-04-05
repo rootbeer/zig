@@ -535,8 +535,8 @@ inline fn mmap_tls(length: usize) linux.SyscallParam {
             0,
             length,
             prot,
-            @as(u32, @bitCast(flags)),
-            @as(usize, @bitCast(@as(isize, -1))),
+            linux.castParam(flags),
+            linux.castParam(-1),
             0,
         });
     } else {
@@ -548,8 +548,8 @@ inline fn mmap_tls(length: usize) linux.SyscallParam {
                 0,
                 length,
                 prot,
-                @as(u32, @bitCast(flags)),
-                @as(usize, @bitCast(@as(isize, -1))),
+                linux.castParam(flags),
+                linux.castParam(-1),
                 0,
             }),
         }) else @call(.always_inline, linux.syscall6, .{

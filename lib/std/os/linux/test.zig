@@ -218,7 +218,7 @@ comptime {
 
 test "futex v1" {
     var lock: std.atomic.Value(u32) = std.atomic.Value(u32).init(1);
-    var rc: usize = 0;
+    var rc: linux.SyscallParam = 0;
 
     // No-op wait, lock value is not expected value
     rc = linux.futex(&lock.raw, .{ .cmd = .WAIT, .private = true }, 2, .{ .timeout = null }, null, 0);
@@ -345,7 +345,7 @@ fn futex2_skip_if_unsupported() !void {
 
 test "futex2_wait" {
     var lock: std.atomic.Value(u32) = std.atomic.Value(u32).init(1);
-    var rc: usize = 0;
+    var rc: linux.SyscallParam = 0;
     const mask = 0x1;
 
     try futex2_skip_if_unsupported();

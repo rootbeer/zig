@@ -1781,7 +1781,7 @@ fn unregister_buf_ring(fd: posix.fd_t, group_id: u16) !void {
     try handle_register_buf_ring_result(res);
 }
 
-fn handle_register_buf_ring_result(res: usize) !void {
+fn handle_register_buf_ring_result(res: linux.SyscallParam) !void {
     switch (linux.E.init(res)) {
         .SUCCESS => {},
         .INVAL => return error.ArgumentsInvalid,
