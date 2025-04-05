@@ -66,6 +66,70 @@ pub const restore_rt = syscall_bits.restore_rt;
 pub const socketcall = syscall_bits.socketcall;
 pub const syscall_pipe = syscall_bits.syscall_pipe;
 pub const syscall_fork = syscall_bits.syscall_fork;
+pub const SyscallParam = if (@hasDecl(syscall_bits, "SyscallParam")) syscall_bits.SyscallParam else usize;
+
+// Cast the given argument into a SyscallParam.  SyscallParam is the register size (so 32 or 64 bit),
+// and the given parameter is never larger.  The parameter may need to be sign-extended.
+pub fn castParam(x: anytype) SyscallParam {
+    const SignedSyscallParam = @Type(.{ .int = .{
+        .signedness = .signed,
+        .bits = @bitSizeOf(SyscallParam),
+    } });
+    switch (@typeInfo(@TypeOf(x))) {
+        .comptime_int => {
+            if (x < 0) {
+                return @bitCast(@as(SignedSyscallParam, x));
+            }
+            return x;
+        },
+        .int => |x_info| {
+            if (x_info.signedness == .signed) {
+                return @bitCast(@as(SignedSyscallParam, x));
+            } else {
+                return @as(SyscallParam, x);
+            }
+        },
+        .@"struct" => |struct_info| { // Must be a packed struct
+            if (struct_info.backing_integer) |Int| {
+                return @intCast(@as(Int, @bitCast(x)));
+            } else {
+                @compileError("Syscall parameter must be packed struct");
+            }
+        },
+        .@"enum" => {
+            return @intCast(@intFromEnum(x));
+        },
+        .optional, // Always an optional pointer in syscalls
+        .pointer,
+        => {
+            return @intCast(@as(SyscallParam, @intFromPtr(x)));
+        },
+        else => @compileError("No support for casting to a syscall register"),
+    }
+}
+
+test castParam {
+    _ = castParam(-1);
+    _ = castParam(1);
+    _ = castParam(0xFfff_Ffff);
+    _ = castParam(@as(i16, -1));
+    _ = castParam(@as(i32, -1));
+    _ = castParam(@as(u16, 1));
+    _ = castParam(@as(u32, 1));
+
+    _ = castParam(@as(pid_t, 1));
+    _ = castParam(@as(fd_t, 1));
+    _ = castParam(@as(fd_t, -1));
+    _ = castParam(FUTEX_WAKE_OP{ .cmd = .SET, .cmp = .GT, .oparg = 6, .cmdarg = 6 }); // packed struct
+    _ = castParam(MAP_TYPE.SHARED); // enum
+    _ = castParam(&kernel_timespec{ .sec = 0, .nsec = 0 });
+    _ = castParam(@as(?*u64, null));
+
+    if (@bitSizeOf(SyscallParam) == 64) {
+        _ = castParam(@as(i64, -1));
+        _ = castParam(@as(u64, 1));
+    }
+}
 
 pub fn clone(
     func: *const fn (arg: usize) callconv(.c) u8,
