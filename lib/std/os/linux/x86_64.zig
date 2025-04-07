@@ -155,14 +155,11 @@ pub fn restore_rt() callconv(.naked) noreturn {
     }
 }
 
-pub const mode_t = usize;
-pub const time_t = switch (builtin.abi) {
-    .gnux32, .muslx32 => i64,
-    else => isize,
-};
-pub const nlink_t = usize;
-pub const blksize_t = isize;
-pub const blkcnt_t = isize;
+pub const mode_t = u32;
+pub const time_t = i64;
+pub const nlink_t = u64;
+pub const blksize_t = i64;
+pub const blkcnt_t = i64;
 
 pub const F = struct {
     pub const DUPFD = 0;
@@ -268,21 +265,21 @@ pub const dev_t = u64;
 pub const Stat = extern struct {
     dev: dev_t,
     ino: ino_t,
-    nlink: usize,
+    nlink: nlink_t,
 
-    mode: u32,
+    mode: mode_t,
     uid: uid_t,
     gid: gid_t,
     __pad0: u32,
     rdev: dev_t,
     size: off_t,
-    blksize: isize,
-    blocks: i64,
+    blksize: blksize_t,
+    blocks: blkcnt_t,
 
     atim: timespec,
     mtim: timespec,
     ctim: timespec,
-    __unused: [3]isize,
+    __unused: [3]u64,
 
     pub fn atime(self: @This()) timespec {
         return self.atim;
@@ -298,8 +295,8 @@ pub const Stat = extern struct {
 };
 
 pub const timeval = extern struct {
-    sec: isize,
-    usec: isize,
+    sec: i64,
+    usec: i64,
 };
 
 pub const timezone = extern struct {
@@ -309,15 +306,15 @@ pub const timezone = extern struct {
 
 pub const Elf_Symndx = u32;
 
-pub const greg_t = usize;
+pub const greg_t = u64;
 pub const gregset_t = [23]greg_t;
 pub const fpstate = extern struct {
     cwd: u16,
     swd: u16,
     ftw: u16,
     fop: u16,
-    rip: usize,
-    rdp: usize,
+    rip: u64,
+    rdp: u64,
     mxcsr: u32,
     mxcr_mask: u32,
     st: [8]extern struct {
@@ -357,10 +354,10 @@ pub const sigcontext = extern struct {
     fs: u16,
     pad0: u16 = undefined,
 
-    err: usize,
-    trapno: usize,
-    oldmask: usize,
-    cr2: usize,
+    err: u64,
+    trapno: u64,
+    oldmask: u64,
+    cr2: u64,
 
     fpstate: *fpstate,
     reserved1: [8]usize = undefined,
@@ -381,12 +378,12 @@ pub const mcontext_t = extern struct {
 /// split into one for the kernel ABI and c.zig should define a glibc/musl
 /// compatible structure.
 pub const ucontext_t = extern struct {
-    flags: usize,
+    flags: u64,
     link: ?*ucontext_t,
     stack: stack_t,
     mcontext: mcontext_t,
-    sigmask: [1024 / @bitSizeOf(c_ulong)]c_ulong, // Currently a glibc-compatible (1024-bit) sigmask.
-    fpregs_mem: [64]usize, // Not part of kernel ABI, only part of glibc ucontext_t
+    sigmask: sigset_t,
+    fpregs_mem: [64]u64, // Not really part of kernel ABI, more the glibc ucontext_t
 };
 
 fn gpRegisterOffset(comptime reg_index: comptime_int) usize {
