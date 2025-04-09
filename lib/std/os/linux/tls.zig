@@ -508,8 +508,8 @@ pub fn initStatic(phdrs: []elf.Phdr) void {
             break :blk main_thread_area_buffer[0..area_desc.size];
         }
 
-        const begin_addr = mmap_tls(area_desc.size + area_desc.alignment - 1);
-        if (@call(.always_inline, linux.E.init, .{begin_addr}) != .SUCCESS) @trap();
+        const rc = mmap_tls(area_desc.size + area_desc.alignment - 1);
+        if (@call(.always_inline, linux.E.init, .{rc}) != .SUCCESS) @trap();
 
         // @truncate for x32 ABI which returns 32-bit (usize) address in 64-bit register
         const begin_addr = @as(usize, @truncate(rc));
