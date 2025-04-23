@@ -308,6 +308,7 @@ pub const time_t = isize;
 pub const mode_t = u32;
 pub const dev_t = usize;
 pub const nlink_t = u32;
+pub const time_t = isize;
 pub const blksize_t = isize;
 pub const blkcnt_t = isize;
 
