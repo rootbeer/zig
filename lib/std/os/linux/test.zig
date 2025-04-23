@@ -198,11 +198,19 @@ test "sigemptyset" {
 
 test "sysinfo" {
     var info: linux.Sysinfo = undefined;
-    const result: usize = linux.sysinfo(&info);
+    const result = linux.sysinfo(&info);
     try expect(std.os.linux.E.init(result) == .SUCCESS);
 
     try expect(info.mem_unit > 0);
     try expect(info.mem_unit <= std.heap.page_size_max);
+    try expectEqual(0, info.mem_unit % 1024);
+
+    try expect(info.freeswap <= info.totalswap);
+    try expect(info.freeram < info.totalram);
+    try expect(info.sharedram < info.totalram);
+    try expect(info.bufferram < info.totalram);
+
+    try expect(info.freehigh <= info.totalhigh);
 }
 
 comptime {

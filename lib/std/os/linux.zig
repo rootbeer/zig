@@ -2764,7 +2764,7 @@ pub const Sysinfo = switch (native_abi) {
     },
 };
 
-pub fn sysinfo(info: *Sysinfo) usize {
+pub fn sysinfo(info: *Sysinfo) SyscallParam {
     return syscall1(.sysinfo, @intFromPtr(info));
 }
 
